@@ -28,6 +28,7 @@ camera.saturation = 70
 camera.annotate_text_size = 60
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 cycleeffects = cycle(selectedeffects)
+buttonflag = False
 
 def get_base_filename_for_images():
     """
@@ -85,23 +86,12 @@ def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
 
  
 def make_solid(color='white', duration=0, layer=3,):
-    """
-    Add an overlay (and sleep for an optional duration).
-    If sleep duration is not supplied, then overlay will need to be removed later.
-    This function returns an overlay id, which can be used to remove_overlay(id).
-    """
-    # Create an image padded to the required size with
-    # mode 'RGB'
-    pad = Image.new('RGBA', (
-        ((1280 + 31) // 32) * 32,
-        ((1024 + 15) // 16) * 16,
-        ),(color))
-    # Paste the original image into the padded one
-    #pad.paste(img, (0, 0))
 
-    # Add the overlay with the padded image as the source,
-    # but the original image's dimensions
-    o_id = camera.add_overlay(pad.tobytes(), size=(1280,1024))
+    pad = Image.new('RGBA', (
+        ((screen_w + 31) // 32) * 32,
+        ((screen_h + 15) // 16) * 16,
+        ),(color))
+    o_id = camera.add_overlay(pad.tobytes(), size=(screen_w,screen_h))
     o_id.layer = layer
 
     if duration > 0:
@@ -111,15 +101,18 @@ def make_solid(color='white', duration=0, layer=3,):
     else:
         return o_id # we have an overlay, and will need to remove it later
 
-
 def setupGPIO():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # assign GPIO pin 21 to our "take photo" button
     GPIO.setup(led_pin, GPIO.OUT)
 
 def my_callback(channel):
-    camera.image_effect = next(cycleeffects)
-    print("EFFECT: "+camera.image_effect) 
+    if buttonflag == False:
+        camera.image_effect = next(cycleeffects)
+        print("EFFECT: "+camera.image_effect) 
+    else:
+        buttonflag = True
+        #TODO = start running main program
 
 def taking_photo(photo_number, filename_prefix):
     """
@@ -138,7 +131,7 @@ def taking_photo(photo_number, filename_prefix):
     for counter in range(countdowntimer,0,-1):
         camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
 
-        flashrate = -3*counter+13
+        flashrate = -3*counter+13  #only really works for counter = 4
         for i in range(flashrate):
             GPIO.output(led_pin, True)
             sleep(0.5/flashrate)
@@ -186,25 +179,15 @@ def taking_photo(photo_number, filename_prefix):
 
     #Take still
     camera.annotate_text = ''
-
-
-#    flash.alpha = 255
-    camera.hflip = False
+ 
     camera.start_preview(alpha = 0)
+    camera.hflip = False
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
+    camera.hflip = True     
     camera.start_preview(alpha = 255)
-    camera.hflip = True    
+   
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
-    #camera.capture(filename)
 
-#    flash.alpha = 0
-#    sleep(0.18)
-                
-    #camera.hflip = False
-    #camera.capture(filename)
-    #camera.capture('/home/pi/Desktop/Captures/image%s.jpg' % photo_number)
-    #camera.hflip = True
-    
     print("Photo (" + str(photo_number) + ") saved: " + filename)
     
 
@@ -214,62 +197,41 @@ def main():
     print("Starting main process")
     setupGPIO()
     background = make_solid('white',0,1)
+    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
+
     camera.start_preview()
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
     instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
-#    flash = make_solid('white',0)
-#    flash.alpha = 0
    
     while True:
         #Check to see if button is pushed
-        is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
+        #is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
 
         #Stay inside loop until button is pressed
-        if is_pressed is None:
-        #TODO flash button LED on and off every second
+        if buttonflag == False:
             GPIO.output(led_pin, True)
-         #   delay(1)
-         #   GPIO.output(led_pin, False)
-         #   delay(1)
+            delay(1)
+            GPIO.output(led_pin, False)
+            delay(1)
 
 
             
             continue
 
         print("Taking photos!")
-        GPIO.cleanup()
+#        GPIO.cleanup()
 
         remove_overlay(instruction_image)
 
-        setupGPIO()
-        sleep(2)
-        GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
+#        setupGPIO()
+#        sleep(2)
 
         filename_prefix = get_base_filename_for_images()
 
         for photo_number in range(1, total_pics + 1):
-
-            #
-            #prep_for_photo_screen(photo_number)
-            #
+            #take all sets of photos
             taking_photo(photo_number, filename_prefix)
-        """
-                #TODO turn LED strips on
-                for i in range(4):
-                        print("photo "+ i+"...")
-                        count_down(i)
-
-#                        flash.alpha = 255
-                        camera.hflip = False
-                        camera.capture(REAL_PATH+'/temp/image%s.jpg' % i)
-                        camera.hflip = True
-#                        flash.alpha = 0
-                        sleep(0.18)
-        """
-                
-        #TODO turn LED strips off
-        #TODO turn button LED off
-#        remove_overlay(flash)
+            
         wait_image =  overlay_image(REAL_PATH+'/assets/wait.png',0)
 
         GPIO.remove_event_detect(pin_camera_btn)
@@ -304,10 +266,9 @@ def main():
         #TODO - PRINT commands here
         
         instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
-
+        buttonflag = False
         print("reached end of main loop")
         #setupGPIO()
-        #TODO make button LED flash again
 
 
 
