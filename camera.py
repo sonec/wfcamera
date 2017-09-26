@@ -14,6 +14,7 @@ from itertools import cycle
 ## variables ##
 selectedeffects = "none","negative","cartoon","sketch","colorbalance","emboss","film","watercolor","gpen","oilpaint","hatch"
 pin_camera_btn = 21 # pin that the button is attached to
+countdowntimer = 4
 led_pin = 17
 camera = PiCamera()
 camera.rotation = 270
@@ -119,26 +120,6 @@ def setupGPIO():
 def my_callback(channel):
     camera.image_effect = next(cycleeffects)
     print("EFFECT: "+camera.image_effect) 
-"""
-def count_down(i):
-
-    #display a "count down" on screen, starting from 5
-    #TODO make LED buttons flash faster
-    # 1 sec period- off
-    # 0.4 sec period - 0.25 period
-    # 0.3 sec period - 
-    # 0.2 sec period - 
-    # 0.1 sec period - on
-
-    messages = " Say Cheese! ", " Again! ", " Once more! ", " Last one! "
-    camera.annotate_text = messages[i]
-    sleep(1)
-
-    for counter in range(1,0,-1):
-        camera.annotate_text = (messages[i]+"\n..." + str(counter) + "...")
-        sleep(1)
-    camera.annotate_text = ''
-"""
 
 def taking_photo(photo_number, filename_prefix):
     """
@@ -154,11 +135,16 @@ def taking_photo(photo_number, filename_prefix):
     camera.annotate_text = messages[photo_number-1]
     sleep(0)
 
-    for counter in range(4,0,-1):
+    for counter in range(countdowntimer,0,-1):
         camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
 
-
-
+        flashrate = -3*counter+13
+        for i in range(flashrate):
+            GPIO.output(led_pin, True)
+            sleep(0.5/flashrate)
+            GPIO.output(led_pin, False)
+            sleep(0.5/flashrate)
+"""
         if counter == 4:
             for i in range(1):
                 GPIO.output(led_pin, True)
@@ -185,7 +171,7 @@ def taking_photo(photo_number, filename_prefix):
                 sleep(0.025)
                 GPIO.output(led_pin, False)
                 sleep(0.025)
-                
+                """
                 
         #flashrate = 
             """
