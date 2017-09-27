@@ -15,6 +15,7 @@ from itertools import cycle
 selectedeffects = "none","negative","cartoon","sketch","colorbalance","emboss","film","watercolor","gpen","oilpaint","hatch"
 pin_camera_btn = 21 # pin that the button is attached to
 countdowntimer = 4
+flashhertz = 10
 led_pin = 17
 camera = PiCamera()
 camera.rotation = 270
@@ -131,7 +132,9 @@ def taking_photo(photo_number, filename_prefix):
     for counter in range(countdowntimer,0,-1):
         camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
 
-        flashrate = -3*counter+13  #only really works for counter = 4
+        #flashes faster as counter counts down
+        flashrate = ((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz
+#        flashrate = -3*counter+13  #only really works for counter = 4
         for i in range(flashrate):
             GPIO.output(led_pin, True)
             sleep(0.5/flashrate)
