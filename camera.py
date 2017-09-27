@@ -14,8 +14,8 @@ from itertools import cycle
 ## variables ##
 selectedeffects = "none","negative","cartoon","sketch","colorbalance","emboss","film","watercolor","gpen","oilpaint","hatch"
 pin_camera_btn = 21 # pin that the button is attached to
-countdowntimer = 4
-flashhertz = 10
+countdowntimer = 6
+flashhertz = 12
 led_pin = 17
 camera = PiCamera()
 camera.rotation = 270
@@ -133,51 +133,16 @@ def taking_photo(photo_number, filename_prefix):
         camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
 
         #flashes faster as counter counts down
-        flashrate = ((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz
+        flashrate = int(((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz)
+        #flashrate = int((9/(countdowntimer-1))*(-counter+1)+10)
+        print(flashrate)
 #        flashrate = -3*counter+13  #only really works for counter = 4
         for i in range(flashrate):
             GPIO.output(led_pin, True)
             sleep(0.5/flashrate)
             GPIO.output(led_pin, False)
             sleep(0.5/flashrate)
-"""
-        if counter == 4:
-            for i in range(1):
-                GPIO.output(led_pin, True)
-                sleep(0.5)
-                GPIO.output(led_pin, False)
-                sleep(0.5)
-                
-        if counter == 3:
-            for i in range(2):
-                GPIO.output(led_pin, True)
-                sleep(0.25)
-                GPIO.output(led_pin, False)
-                sleep(0.25)
-                
-        if counter == 2:
-            for i in range(10):
-                GPIO.output(led_pin, True)
-                sleep(0.05)
-                GPIO.output(led_pin, False)
-                sleep(0.05)
-        if counter == 1:
-            for i in range(20):
-                GPIO.output(led_pin, True)
-                sleep(0.025)
-                GPIO.output(led_pin, False)
-                sleep(0.025)
-                """
-                
-        #flashrate = 
-            """
-        for i in range(counter):
-            GPIO.output(led_pin, True)
-            sleep(1/counter)
-            GPIO.output(led_pin, False)
-            sleep(1/counter)
-            """
-        #sleep(1)
+
 
 
     #Take still
@@ -200,7 +165,7 @@ def main():
     print("Starting main process")
     setupGPIO()
     background = make_solid('white',0,1)
-    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
+  #  GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
 
     camera.start_preview()
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
@@ -208,26 +173,28 @@ def main():
    
     while True:
         #Check to see if button is pushed
-        #is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
+        is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
 
         #Stay inside loop until button is pressed
-        if buttonflag == False:
+        if is_pressed is None:
+#        if buttonflag == False:
+            """
             GPIO.output(led_pin, True)
             delay(1)
             GPIO.output(led_pin, False)
             delay(1)
-
+    """
 
             
             continue
 
         print("Taking photos!")
-#        GPIO.cleanup()
+        GPIO.cleanup()
 
         remove_overlay(instruction_image)
 
-#        setupGPIO()
-#        sleep(2)
+        setupGPIO()
+        sleep(2)
 
         filename_prefix = get_base_filename_for_images()
 
