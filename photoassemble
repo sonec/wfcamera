@@ -1,0 +1,10 @@
+#!/bin/bash
+realpath='/home/pi/wfcamera'
+
+montage ${realpath}/temp/image*.jpg -tile 2x2 -geometry +10+10 ${realpath}/temp/temp_montage_four.jpg
+convert ${realpath}/temp/temp_montage_four.jpg -resize 100x100 ${realpath}/temp/temp_montage_thumbnail.jpg
+montage ${realpath}/temp/temp_montage_four.jpg ${realpath}/assets/photobooth_label.jpg -tile 2x1 -geometry +5+5 ${realpath}/temp/temp_montage_framed.jpg
+#rm ${realpath}/temp/temp_montage.jpg
+#convert ${realpath}/temp/temp_montage_framed.jpg -resize 1000x1000 ${realpath}/temp/montage_preview.jpg
+#suffix=$(date +%H%M%S)
+#cp ${realpath}/temp/temp_montage1.jpg ${realpath}/montages/IMG_${suffix}.jpg
