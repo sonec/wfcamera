@@ -3,6 +3,7 @@
 import RPi.GPIO as GPIO
 from picamera import PiCamera, Color
 from time import sleep
+from time import time
 from PIL import Image
 from shutil import copyfile
 import datetime
@@ -12,10 +13,10 @@ import subprocess
 from itertools import cycle
 
 ## variables ##
-selectedeffects = "none","negative","cartoon","sketch","colorbalance","emboss","film","watercolor","gpen","oilpaint","hatch"
+selectedeffects = "none","negative","solarize","cartoon","sketch","colorbalance","emboss","film","watercolor","gpen","oilpaint","hatch","pastel","blur","saturation","washedout","posterise","colorpoint","deinterlace1","deinterlace2"
 pin_camera_btn = 21 # pin that the button is attached to
-countdowntimer = 6
-flashhertz = 12
+countdowntimer = 6  # how many seconds to count down from
+flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
 led_pin = 17
 camera = PiCamera()
 camera.rotation = 270
@@ -104,15 +105,22 @@ def make_solid(color='white', duration=0, layer=3,):
 
 def setupGPIO():
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # assign GPIO pin 21 to our "take photo" button
+
+ #   GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # assign GPIO pin 21 to our "take photo" button
+    GPIO.setup(pin_camera_btn, GPIO.IN,pull_up_down=GPIO.PUD_UP) 
     GPIO.setup(led_pin, GPIO.OUT)
+    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=500)
 
 def my_callback(channel):
+    global buttonflag
+    
     if buttonflag == False:
         camera.image_effect = next(cycleeffects)
         print("EFFECT: "+camera.image_effect) 
     else:
-        buttonflag = True
+ #       buttonflag = True
+         sleep(0)
+  #  print(buttonflag)
         #TODO = start running main program
 
 def taking_photo(photo_number, filename_prefix):
@@ -133,16 +141,40 @@ def taking_photo(photo_number, filename_prefix):
         camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
 
         #flashes faster as counter counts down
-        flashrate = int(((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz)
-        #flashrate = int((9/(countdowntimer-1))*(-counter+1)+10)
-        print(flashrate)
-#        flashrate = -3*counter+13  #only really works for counter = 4
+#        flashrate = int(((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz)
+
+        #print(flashrate)
+        """
         for i in range(flashrate):
             GPIO.output(led_pin, True)
-            sleep(0.5/flashrate)
+            sleep(0.1/flashrate)
             GPIO.output(led_pin, False)
-            sleep(0.5/flashrate)
-
+            sleep(0.90/flashrate)
+        """
+        if counter > 3:
+            for i in range(1):
+                GPIO.output(led_pin, True)
+                sleep(0.05)
+                GPIO.output(led_pin, False)
+                sleep(0.95)
+        elif counter == 3:
+            for i in range(2):
+                GPIO.output(led_pin, True)
+                sleep(0.05)
+                GPIO.output(led_pin, False)
+                sleep(0.45)
+        elif counter ==2:
+            for i in range(4):
+                GPIO.output(led_pin, True)
+                sleep(0.05)
+                GPIO.output(led_pin, False)
+                sleep(0.20)
+        elif counter == 1:
+            for i in range(1):
+                GPIO.output(led_pin, True)
+                sleep(1)
+                GPIO.output(led_pin, False)
+                
 
 
     #Take still
@@ -157,7 +189,6 @@ def taking_photo(photo_number, filename_prefix):
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
     print("Photo (" + str(photo_number) + ") saved: " + filename)
-    
 
 
 def main():
@@ -165,35 +196,52 @@ def main():
     print("Starting main process")
     setupGPIO()
     background = make_solid('white',0,1)
-  #  GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
+#    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
 
     camera.start_preview()
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
     instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
-   
+    print("beginning loop")
+    global buttonflag
+    pinstatus = False
+    start = time()
     while True:
+
+#        func2()
         #Check to see if button is pushed
-        is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
+#        is_pressed = GPIO.wait_for_edge(pin_camera_btn, GPIO.FALLING, timeout=100)
 
         #Stay inside loop until button is pressed
-        if is_pressed is None:
-#        if buttonflag == False:
-            """
-            GPIO.output(led_pin, True)
-            delay(1)
-            GPIO.output(led_pin, False)
-            delay(1)
-    """
-
+#        if is_pressed is None:
+        if buttonflag == False:
             
+            #idleflash()
+        #    t = threading.Timer(10,func2)
+        #    t.start()
+            
+            if (time() - start) > 1:
+                start = time()
+                if pinstatus == True:
+                    GPIO.output(led_pin, False)
+                    pinstatus = False
+                else:
+                    GPIO.output(led_pin, True)
+                    pinstatus = True
+                #print(time() - start)                          
+            
+        #    for i in range(10):
+        #        sleep(0.1)
+        #    GPIO.output(led_pin, False)
+        #    for i in range(10):
+        #        sleep(0.1)          
             continue
 
         print("Taking photos!")
-        GPIO.cleanup()
-
+  #      GPIO.cleanup()
         remove_overlay(instruction_image)
 
-        setupGPIO()
+  #      setupGPIO()
+
         sleep(2)
 
         filename_prefix = get_base_filename_for_images()
@@ -204,7 +252,7 @@ def main():
             
         wait_image =  overlay_image(REAL_PATH+'/assets/wait.png',0)
 
-        GPIO.remove_event_detect(pin_camera_btn)
+#        GPIO.remove_event_detect(pin_camera_btn)
         print("Processing photos")
         subprocess.call("sudo " + REAL_PATH+"/photoassemble",shell="True")        
         
