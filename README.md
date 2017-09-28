@@ -4,5 +4,5 @@ A python script for the RaspberryPi that utilises buttons, LEDs, the RaspberryPi
 
 # Installation
 
-    sudo apt-get install python-dev python-setuptools libjpeg-dev
+    sudo apt-get install python-dev python-setuptools libjpeg-dev imagemagick
     sudo pip install -r requirements.txt
