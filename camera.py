@@ -13,7 +13,7 @@ import subprocess
 from itertools import cycle
 
 ## variables ##
-selectedeffects = "none","negative","solarize","cartoon","sketch","colorbalance","emboss","film","watercolor","gpen","oilpaint","hatch","pastel","blur","saturation","washedout","posterise","colorpoint","deinterlace1","deinterlace2"
+selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
 pin_camera_btn = 21 # pin that the button is attached to
 countdowntimer = 6  # how many seconds to count down from
 flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
@@ -114,12 +114,11 @@ def setupGPIO():
 def my_callback(channel):
     global buttonflag
     
-    if buttonflag == False:
+    if buttonflag == True:
         camera.image_effect = next(cycleeffects)
         print("EFFECT: "+camera.image_effect) 
     else:
- #       buttonflag = True
-         sleep(0)
+        buttonflag = True
   #  print(buttonflag)
         #TODO = start running main program
 
@@ -256,8 +255,8 @@ def main():
         print("Processing photos")
         subprocess.call("sudo " + REAL_PATH+"/photoassemble",shell="True")        
         
-        copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/montages/"+filename_prefix+"_montage.jpg")
-        copyfile(REAL_PATH+"/temp/temp_montage_thumbnail.jpg",REAL_PATH+"/thumbnails/"+filename_prefix+"_thumbnail.jpg")
+        copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
+        copyfile(REAL_PATH+"/temp/temp_montage_thumbnail.jpg",REAL_PATH+"/www/thumbnails/"+filename_prefix+"_montage.jpg")
         print("Processing complete")
 
         remove_overlay(wait_image)

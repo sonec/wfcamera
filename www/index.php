@@ -52,16 +52,3 @@
 
   </body>
 </html>
-
-
-
-
-<!DOCTYPE html>
-<html>
- <head>
-   <title>PHP Gallery</title>
- </head>
- <body>
-   
- </body>
-</html>
