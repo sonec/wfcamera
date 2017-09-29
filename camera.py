@@ -11,10 +11,12 @@ import os
 import subprocess             
 #import itertools
 from itertools import cycle
+import signal
+import sys
 
 ## variables ##
 selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
-pin_camera_btn = 21 # pin that the button is attached to
+pin_camera_btn = 11 # pin that the button is attached to
 countdowntimer = 6  # how many seconds to count down from
 flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
 led_pin = 17
@@ -31,6 +33,13 @@ camera.annotate_text_size = 60
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 cycleeffects = cycle(selectedeffects)
 buttonflag = False
+
+def signal_handler(signal, frame):
+        print('You pressed Ctrl+C!')
+	camera.close()
+	GPIO.cleanup()
+        sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
 
 def get_base_filename_for_images():
     """
