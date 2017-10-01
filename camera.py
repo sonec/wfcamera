@@ -19,13 +19,13 @@ countdowntimer = 6  # how many seconds to count down from
 flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
 led_pin = 17
 camera = PiCamera()
-camera.rotation = 270
+camera.rotation = 90
 camera.resolution= (640,512)
 total_pics = 4
 screen_w = 1280      # resolution of the photo booth display
 screen_h = 1024
 camera.hflip = True
-camera.saturation = 70
+camera.saturation = 50
 #camera.annotate_background = Color('black')
 camera.annotate_text_size = 60
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -115,8 +115,9 @@ def my_callback(channel):
     global buttonflag
     
     if buttonflag == True:
-        camera.image_effect = next(cycleeffects)
-        print("EFFECT: "+camera.image_effect) 
+#        camera.image_effect = next(cycleeffects)
+#        print("EFFECT: "+camera.image_effect) 
+         print("no filter")
     else:
         buttonflag = True
   #  print(buttonflag)
@@ -184,7 +185,7 @@ def taking_photo(photo_number, filename_prefix):
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
     camera.hflip = True     
     camera.start_preview(alpha = 255)
-   
+    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,5)
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
     print("Photo (" + str(photo_number) + ") saved: " + filename)
@@ -263,7 +264,7 @@ def main():
 
         #Playback
         prev_overlay = False
-        
+        """
         for photo_number in range(1, total_pics + 1):
             filename = REAL_PATH+"/photos/"+filename_prefix + '_' + str(photo_number) + 'of'+ str(total_pics)+'.jpg'
             this_overlay = overlay_image(filename, False, 3+total_pics)
@@ -273,12 +274,14 @@ def main():
             sleep(2)
             prev_overlay = this_overlay
         remove_overlay(prev_overlay)
+        """
 
         overlay_image(REAL_PATH+'/temp/temp_montage_framed.jpg',10)
+        overlay_image(REAL_PATH+'/assets/download.png',10)
 
         
-        camera.image_effect = 'none'
-        cycleeffects = cycle(selectedeffects)
+#        camera.image_effect = 'none'
+#        cycleeffects = cycle(selectedeffects)
         
         #TODO - PRINT commands here
         
