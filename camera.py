@@ -19,13 +19,13 @@ countdowntimer = 6  # how many seconds to count down from
 flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
 led_pin = 17
 camera = PiCamera()
-camera.rotation = 90
+camera.rotation = 00
 camera.resolution= (640,512)
 total_pics = 4
 screen_w = 1280      # resolution of the photo booth display
 screen_h = 1024
 camera.hflip = True
-camera.saturation = 50
+camera.saturation = 0
 #camera.annotate_background = Color('black')
 camera.annotate_text_size = 60
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -56,7 +56,7 @@ def remove_overlay(overlay_id):
         camera.remove_overlay(overlay_id)
 
 
-def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
+def overlay_image(image_path, duration=0, layer=3,mode='RGB',mirror=False):
     """
     Add an overlay (and sleep for an optional duration).
     If sleep duration is not supplied, then overlay will need to be removed later.
@@ -76,7 +76,7 @@ def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
 
     # Add the overlay with the padded image as the source,
     # but the original image's dimensions
-    o_id = camera.add_overlay(pad.tobytes(), size=img.size)
+    o_id = camera.add_overlay(pad.tobytes(), size=img.size,hflip=mirror)
     o_id.layer = layer
 
     if duration > 0:
@@ -151,19 +151,19 @@ def taking_photo(photo_number, filename_prefix):
             GPIO.output(led_pin, False)
             sleep(0.90/flashrate)
         """
-        if counter > 3:
+        if counter > 5:
             for i in range(1):
                 GPIO.output(led_pin, True)
                 sleep(0.05)
                 GPIO.output(led_pin, False)
                 sleep(0.95)
-        elif counter == 3:
+        elif counter > 3:
             for i in range(2):
                 GPIO.output(led_pin, True)
                 sleep(0.05)
                 GPIO.output(led_pin, False)
                 sleep(0.45)
-        elif counter ==2:
+        elif counter > 1:
             for i in range(4):
                 GPIO.output(led_pin, True)
                 sleep(0.05)
@@ -173,19 +173,21 @@ def taking_photo(photo_number, filename_prefix):
             for i in range(1):
                 GPIO.output(led_pin, True)
                 sleep(1)
-                GPIO.output(led_pin, False)
+                
                 
 
 
     #Take still
     camera.annotate_text = ''
- 
+    GPIO.output(led_pin, False)
     camera.start_preview(alpha = 0)
     camera.hflip = False
+    #Additional EXIF data can be placed here
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
+    
     camera.hflip = True     
     camera.start_preview(alpha = 255)
-    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,5)
+    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,5,3,'RGB',True)
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
     print("Photo (" + str(photo_number) + ") saved: " + filename)
@@ -277,7 +279,7 @@ def main():
         """
 
         overlay_image(REAL_PATH+'/temp/temp_montage_framed.jpg',10)
-        overlay_image(REAL_PATH+'/assets/download.png',10)
+        overlay_image(REAL_PATH+'/assets/download.png',8)
 
         
 #        camera.image_effect = 'none'
