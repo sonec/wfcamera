@@ -13,21 +13,21 @@ import subprocess
 from itertools import cycle
 
 ## variables ##
-selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
+#selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
+selectedeffects = "none","b&w","none","sepia"
 pin_camera_btn = 21 # pin that the button is attached to
-countdowntimer = 6  # how many seconds to count down from
-flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
+countdowntimer = 10  # how many seconds to count down from
+#flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
 led_pin = 17
 camera = PiCamera()
 camera.rotation = 00
-camera.resolution= (640,512)
+camera.resolution= (1600,960)
 total_pics = 4
-screen_w = 1280      # resolution of the photo booth display
-screen_h = 1024
+screen_w = 800      # resolution of the photo booth display
+screen_h = 480
 camera.hflip = True
-camera.saturation = 0
 #camera.annotate_background = Color('black')
-camera.annotate_text_size = 60
+camera.annotate_text_size = 120
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 cycleeffects = cycle(selectedeffects)
 buttonflag = False
@@ -109,15 +109,35 @@ def setupGPIO():
  #   GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # assign GPIO pin 21 to our "take photo" button
     GPIO.setup(pin_camera_btn, GPIO.IN,pull_up_down=GPIO.PUD_UP) 
     GPIO.setup(led_pin, GPIO.OUT)
-    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=500)
+    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
+
+def seteffect(effect):
+    if effect == "sepia":
+        camera.color_effects = (98, 148)
+        camera.contrast = 20
+        camera.saturation = -80
+    elif effect == "b&w":
+        camera.color_effects = None
+        camera.contrast = 20
+        camera.saturation = -100
+
+    else:
+        camera.saturation = 0
+        camera.contrast = 0
+        camera.color_effects = None
+    print("EFFECT: "+effect)
+
 
 def my_callback(channel):
     global buttonflag
     
     if buttonflag == True:
 #        camera.image_effect = next(cycleeffects)
-#        print("EFFECT: "+camera.image_effect) 
-         print("no filter")
+#        print("EFFECT: "+camera.image_effect)
+#         print("no filter")
+        neweffect = next(cycleeffects)
+        seteffect(neweffect)
+         
     else:
         buttonflag = True
   #  print(buttonflag)
@@ -135,7 +155,7 @@ def taking_photo(photo_number, filename_prefix):
 
     messages = " Say Cheese! ", " Again... ", " ...and another! ", " Final one! "
     camera.annotate_text = messages[photo_number-1]
-    sleep(0)
+    #sleep(0)
 
     for counter in range(countdowntimer,0,-1):
         camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
@@ -182,12 +202,11 @@ def taking_photo(photo_number, filename_prefix):
     GPIO.output(led_pin, False)
     camera.start_preview(alpha = 0)
     camera.hflip = False
-    #Additional EXIF data can be placed here
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
     
     camera.hflip = True     
     camera.start_preview(alpha = 255)
-    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,5,3,'RGB',True)
+    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,3,'RGB',True)
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
     print("Photo (" + str(photo_number) + ") saved: " + filename)
@@ -204,6 +223,7 @@ def main():
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
     instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
     print("beginning loop")
+    seteffect("none")
     global buttonflag
     pinstatus = False
     start = time()
@@ -279,12 +299,12 @@ def main():
         """
 
         overlay_image(REAL_PATH+'/temp/temp_montage_framed.jpg',10)
-        overlay_image(REAL_PATH+'/assets/download.png',8)
+        overlay_image(REAL_PATH+'/assets/download.png',10)
 
         
 #        camera.image_effect = 'none'
-#        cycleeffects = cycle(selectedeffects)
-        
+        cycleeffects = cycle(selectedeffects)
+        seteffect("none")
         #TODO - PRINT commands here
         
         instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
@@ -306,6 +326,5 @@ if __name__ == "__main__":
         print("unexpected error: ", str(exception))
 
     finally:
-        #camera.remove_overlay(o)
-        #camera.stop_preview()
+        camera.stop_preview()
         GPIO.cleanup()
