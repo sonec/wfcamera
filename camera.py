@@ -12,6 +12,8 @@ import subprocess
 #import itertools
 from itertools import cycle
 
+subprocess.Popen(["nohup","python3","admin.py"], cwd="www")
+
 ## variables ##
 #selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
 selectedeffects = "none","b&w","none","sepia"
