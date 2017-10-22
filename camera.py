@@ -8,13 +8,12 @@ from PIL import Image
 from shutil import copyfile
 import datetime
 import os
-import subprocess             
+import subprocess
 #import itertools
 from itertools import cycle
 
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
-subprocess.Popen(["nohup","python3","admin.py"], cwd="www")
 
 
 ## variables ##
@@ -39,6 +38,9 @@ montages_taken_this_session = 0
 
 cycleeffects = cycle(selectedeffects)
 buttonflag = False
+
+
+flaskserver = subprocess.Popen(["nohup","python3","admin.py", str(photos_taken_this_session)], cwd="www")
 
 def get_base_filename_for_images():
     """
@@ -211,18 +213,21 @@ def taking_photo(photo_number, filename_prefix):
     camera.start_preview(alpha = 0)
     camera.hflip = False
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
-    
+    camera.hflip = True     
+    camera.start_preview(alpha = 255)
     global photos_taken_this_session
     photos_taken_this_session +=1
     overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,3,'RGB',True)
-    camera.hflip = True     
-    camera.start_preview(alpha = 255)
+    
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
     print("Photo (" + str(photo_number) + ") saved: " + filename)
 
 
 def main():
+    global photos_taken_this_session
+    
+#    app.run(host='0.0.0.0',debug=True)
     print("Starting main process")
     setupGPIO()
     background = make_solid('white',0,1)
@@ -286,13 +291,13 @@ def main():
 #        GPIO.remove_event_detect(pin_camera_btn)
         print("Processing photos")
         subprocess.call("sudo " + REAL_PATH+"/photoassemble",shell="True")        
-        """
-        subprocess.call("montage", REAL_PATH + "/temp/image*.jpg -tile 2x2 -geometry +10+10 " + REAL_PATH + "/temp/temp_montage_four.jpg")
-        subprocess.call("convert", REAL_PATH + "/temp/temp_montage_four.jpg -resize 256x256 " + REAL_PATH + "/temp/temp_montage_thumbnail.jpg")
-        subprocess.call("montage", REAL_PATH + "/temp/temp_montage_four.jpg" + REAL_PATH + "/assets/photobooth_label.jpg -tile 2x1 -geometry +5+5 " + REAL_PATH + "/temp/temp_montage_framed.jpg")
+        
+        #subprocess.call(["montage", REAL_PATH+"/temp/image*.jpg", "-tile", "2x2", "-geometry", "+10+10", REAL_PATH+"/temp/temp_montage_four.jpg"],shell=True)
+        #subprocess.call(["convert", REAL_PATH+"/temp/temp_montage_four.jpg", "-resize", "256x256", REAL_PATH+"/temp/temp_montage_thumbnail.jpg"],shell=True)
+        #subprocess.call(["montage", REAL_PATH+"/temp/temp_montage_four.jpg", REAL_PATH+"/assets/photobooth_label.jpg", "-tile", "2x1", "-geometry +5+5", REAL_PATH+"/temp/temp_montage_framed.jpg"],shell=True)
         copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
         copyfile(REAL_PATH+"/temp/temp_montage_thumbnail.jpg",REAL_PATH+"/www/thumbnails/"+filename_prefix+"_montage.jpg")
-        """        
+                
         global montages_taken_this_session
         montages_taken_this_session +=1
         print("Processing complete")
@@ -335,6 +340,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        
 
     except KeyboardInterrupt:
         print("Exiting")
@@ -345,3 +351,4 @@ if __name__ == "__main__":
     finally:
         camera.stop_preview()
         GPIO.cleanup()
+        flaskserver.kill()
