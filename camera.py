@@ -12,25 +12,31 @@ import subprocess
 #import itertools
 from itertools import cycle
 
+REAL_PATH = os.path.dirname(os.path.realpath(__file__))
+
 subprocess.Popen(["nohup","python3","admin.py"], cwd="www")
+
 
 ## variables ##
 #selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
 selectedeffects = "none","b&w","none","sepia"
+led_pin = 17
 pin_camera_btn = 21 # pin that the button is attached to
 countdowntimer = 10  # how many seconds to count down from
-#flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
-led_pin = 17
 camera = PiCamera()
 camera.rotation = 00
 camera.resolution= (1600,960)
+camera.hflip = True
+camera.annotate_text_size = 120
 total_pics = 4
 screen_w = 800      # resolution of the photo booth display
 screen_h = 480
-camera.hflip = True
+photos_taken_this_session = 0
+montages_taken_this_session = 0
+#flashhertz = 5  #the maximum amount of times (x2) that the button will flash before taking the photo
 #camera.annotate_background = Color('black')
-camera.annotate_text_size = 120
-REAL_PATH = os.path.dirname(os.path.realpath(__file__))
+
+
 cycleeffects = cycle(selectedeffects)
 buttonflag = False
 
@@ -160,7 +166,7 @@ def taking_photo(photo_number, filename_prefix):
     #sleep(0)
 
     for counter in range(countdowntimer,0,-1):
-        camera.annotate_text = (messages[photo_number-1]+"\n..." + str(counter) + "...")
+        camera.annotate_text = ("Photo "+str(photo_number)+" of "+str(total_pics)+"\n"+messages[photo_number-1]+"\n..." + str(counter) + "...")
 
         #flashes faster as counter counts down
 #        flashrate = int(((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz)
@@ -206,16 +212,17 @@ def taking_photo(photo_number, filename_prefix):
     camera.hflip = False
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
     
+    global photos_taken_this_session
+    photos_taken_this_session +=1
+    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,3,'RGB',True)
     camera.hflip = True     
     camera.start_preview(alpha = 255)
-    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,3,'RGB',True)
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
     print("Photo (" + str(photo_number) + ") saved: " + filename)
 
 
 def main():
-
     print("Starting main process")
     setupGPIO()
     background = make_solid('white',0,1)
@@ -279,10 +286,18 @@ def main():
 #        GPIO.remove_event_detect(pin_camera_btn)
         print("Processing photos")
         subprocess.call("sudo " + REAL_PATH+"/photoassemble",shell="True")        
-        
+        """
+        subprocess.call("montage", REAL_PATH + "/temp/image*.jpg -tile 2x2 -geometry +10+10 " + REAL_PATH + "/temp/temp_montage_four.jpg")
+        subprocess.call("convert", REAL_PATH + "/temp/temp_montage_four.jpg -resize 256x256 " + REAL_PATH + "/temp/temp_montage_thumbnail.jpg")
+        subprocess.call("montage", REAL_PATH + "/temp/temp_montage_four.jpg" + REAL_PATH + "/assets/photobooth_label.jpg -tile 2x1 -geometry +5+5 " + REAL_PATH + "/temp/temp_montage_framed.jpg")
         copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
         copyfile(REAL_PATH+"/temp/temp_montage_thumbnail.jpg",REAL_PATH+"/www/thumbnails/"+filename_prefix+"_montage.jpg")
+        """        
+        global montages_taken_this_session
+        montages_taken_this_session +=1
         print("Processing complete")
+        
+
 
         remove_overlay(wait_image)
 
