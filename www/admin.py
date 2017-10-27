@@ -36,6 +36,10 @@ def boothcontrol():
             subprocess.call(['sudo', 'bash', '~/Desktop/enable_ap.sh'],shell=True)
         elif request.form['action'] == 'Disable AP Mode':
             subprocess.call(['sudo', 'bash', '~/Desktop/disable_ap.sh'],shell=True)
+        elif request.form['action'] == 'contrast_minus':
+            print("should decrease contrast")
+        elif request.form['action'] == 'contrast_plus':
+            print("should increase contrast")
         else:
             subprocess.call(['date'])
     data=['Booth Controls','Photo Booth Admin',time.strftime("%b %d %Y %H:%M:%S",time.localtime()),msg]

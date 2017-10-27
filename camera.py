@@ -14,15 +14,17 @@ from itertools import cycle
 
 REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 
-
-
+#turn screen flashing on or not
+screenflash = True
 ## variables ##
 #selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
 selectedeffects = "none","b&w","none","sepia"
 led_pin = 17
+#flash pin is GPIO12!
 pin_camera_btn = 21 # pin that the button is attached to
-countdowntimer = 10  # how many seconds to count down from
+countdowntimer = 4  # how many seconds to count down from
 camera = PiCamera()
+camera.flash_mode = 'on'
 camera.rotation = 00
 camera.resolution= (1600,960)
 camera.hflip = True
@@ -157,18 +159,18 @@ def taking_photo(photo_number, filename_prefix):
     """
     This function captures the photo
     """
-
+    global screenflash
     #get filename to use
     filename = filename_prefix + '_' + str(photo_number) + 'of'+ str(total_pics)+'.jpg'
 
-    #countdown from 3, and display countdown on screen
+    #countdown from n, and display countdown on screen
 
-    messages = " Say Cheese! ", " Again... ", " ...and another! ", " Final one! "
+    messages = " Say Cheese! ", " Let's do it again! ", " Keep smiling! ", " Final one! "
     camera.annotate_text = messages[photo_number-1]
     #sleep(0)
 
     for counter in range(countdowntimer,0,-1):
-        camera.annotate_text = ("Photo "+str(photo_number)+" of "+str(total_pics)+"\n"+messages[photo_number-1]+"\n..." + str(counter) + "...")
+        camera.annotate_text = (messages[photo_number-1]+"\nPhoto "+str(photo_number)+" of "+str(total_pics)+"\n..." + str(counter) + "...")
 
         #flashes faster as counter counts down
 #        flashrate = int(((flashhertz-1)/(countdowntimer-1))*(-counter+1)+flashhertz)
@@ -210,14 +212,16 @@ def taking_photo(photo_number, filename_prefix):
     #Take still
     camera.annotate_text = ''
     GPIO.output(led_pin, False)
-    camera.start_preview(alpha = 0)
+    if screenflash ==True:
+        camera.start_preview(alpha = 0)
     camera.hflip = False
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
-    camera.hflip = True     
-    camera.start_preview(alpha = 255)
+    camera.hflip = True
+    if screenflash ==True:
+        camera.start_preview(alpha = 255)
     global photos_taken_this_session
     photos_taken_this_session +=1
-    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,3,'RGB',True)
+    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,2,'RGB',True)
     
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
@@ -295,9 +299,9 @@ def main():
         #subprocess.call(["montage", REAL_PATH+"/temp/image*.jpg", "-tile", "2x2", "-geometry", "+10+10", REAL_PATH+"/temp/temp_montage_four.jpg"],shell=True)
         #subprocess.call(["convert", REAL_PATH+"/temp/temp_montage_four.jpg", "-resize", "256x256", REAL_PATH+"/temp/temp_montage_thumbnail.jpg"],shell=True)
         #subprocess.call(["montage", REAL_PATH+"/temp/temp_montage_four.jpg", REAL_PATH+"/assets/photobooth_label.jpg", "-tile", "2x1", "-geometry +5+5", REAL_PATH+"/temp/temp_montage_framed.jpg"],shell=True)
-        copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
+        #copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
         copyfile(REAL_PATH+"/temp/temp_montage_thumbnail.jpg",REAL_PATH+"/www/thumbnails/"+filename_prefix+"_montage.jpg")
-                
+        copyfile(REAL_PATH+"/temp/temp_montage_print.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")        
         global montages_taken_this_session
         montages_taken_this_session +=1
         print("Processing complete")
