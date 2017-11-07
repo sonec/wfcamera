@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ data[0]}}</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" >
+  </head>
+  <body>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="/static/js/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/popper.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+
+<nav class="navbar navbar-light bg-light">
+  <span class="h3" class="navbar-brand mb-0">{{ data[1] }}</span>
+<ul class="navbar-nav">
+	<li class="nav-item">
+        <a class="nav-link" href="stats">Go to Stats</a>
+      </li>
+</ul>
+</nav>
+<div class="container">
+	<div class="row mt-2">
+
+		<div class="col">{{ data[3] }}
+		</div>
+	</div>
+	<div class="row mt-2">
+		<form onsubmit="updateTime()" id="control_panel" action="" method="post" class="col">
+			
+<div class="form-group row mt-2">
+			<label for="mytime" class="col-3 col-form-label">You</label>
+			<div class="col-9">
+			<input class="form-control" name="mytime" type="text" id="mytime" readonly>
+			</div>
+		
+			</div>
+
+			<div class="form-group row">
+			<label for="boothtime" class="col-3 col-form-label">Booth</label>
+			<div class="col-9">
+			<div class="input-group">
+			<input class="form-control" type="text" value="{{ data[2] }}" name="boothtime" id="boothtime" readonly>
+			<span class="input-group-btn">
+			<button type="submit" name="action" value="Sync Time" class="btn btn-primary">Sync</button>
+			</span>
+			</div>
+			</div>
+			</div>
+
+
+
+			<input type="submit" name="action" value="Clear Photo Gallery" class="btn btn-lg btn-block btn-primary">
+			<hr>
+			<input type="submit" name="action" value="Reboot" class="btn btn-lg btn-block btn-warning">
+		
+			<input type="submit" name="action" value="Shutdown" class="btn btn-lg btn-block btn-danger">
+			<hr>
+			<input type="submit" name="action" value="Enable AP Mode" class="btn btn-lg btn-block btn-secondary">
+			<input type="submit" name="action" value="Disable AP Mode" class="btn btn-lg btn-block btn-secondary">
+			
+		</form>
+		
+	</div>
+
+</div>
+
+
+
+<script>
+
+	function updateTime() {
+		var d = new Date();
+		var n = d.toString()
+		//var n = d.getTime();
+		//var cudate = d.split(/\s+/).slice(0,5).join(" ")
+		var cudate = n.split(/(?=\s)/gi).slice(1, 5).join('');
+
+		document.getElementById('mytime').value = cudate
+	}
+	updateTime()
+</script>
+
+  </body>
+</html>
+

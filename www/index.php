@@ -14,6 +14,7 @@
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="static/js/jquery-3.2.1.min.js"></script>
+    <script src="static/js/popper.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
 <nav class="navbar navbar-light bg-light">
   <span class="h3" class="navbar-brand mb-0">Photo Booth</span>
@@ -61,6 +62,7 @@ if($max>$total){
 	       //print_r($files);
 //    echo "Processsing page : $page offset: $offset max: $max total: $total last_page: $last_page";        
 //    show_pagination($page, $last_page);        
+if(!$files){echo '<p>No Photos to Show</p>'; }
     for($i = $offset; $i< $max; $i++){
         $file = $files[$i];
         $path_parts = pathinfo($file);

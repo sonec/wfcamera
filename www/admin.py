@@ -25,12 +25,12 @@ def boothcontrol():
         elif request.form['action'] == 'Reboot':
             subprocess.call(["sudo", "reboot"])
         elif request.form['action'] == 'Clear Photo Gallery':
-            subprocess.call(['mv','~/wfcamera/www/montages/*', '~/wfcamera/montages_old/'],shell=True)
-            subprocess.call(['mv','~/wfcamera/www/thumbnails/*', '~/wfcamera/thumbnails_old/'],shell=True)
+            subprocess.call(['mv ~/wfcamera/www/montages/* ~/wfcamera/montages_old/'],shell=True)
+            subprocess.call(['mv ~/wfcamera/www/thumbnails/* ~/wfcamera/thumbnails_old/'],shell=True)
             msg = Markup('<div class="alert alert-success alert-dismissible fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>Photos cleared</div>')
         elif request.form['action'] == 'Sync Time':
             newdate = request.form['mytime']
-            subprocess.call(['sudo', 'date', '-s', '"'+newdate+'"'])
+            subprocess.call(['sudo date -s "'+newdate+'"'],shell=True)
             msg = Markup('<div class="alert alert-success alert-dismissible fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>Time synced</div>')
         elif request.form['action'] == 'Enable AP Mode':
             subprocess.call(['sudo', 'bash', '~/Desktop/enable_ap.sh'],shell=True)
