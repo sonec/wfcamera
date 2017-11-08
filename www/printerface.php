@@ -4,6 +4,7 @@ $docroot = '/home/pi/wfcamera/www/';
 if (isset($_POST['print']))
 {
 exec('lp -d CANON_SELPHY_CP1200 '.$docroot.$_POST['path']);
+$message = "Printing";
 //exec('ls');
 //exec('lp -d CANON_SELPHY_CP910'.$_POST['path']);
 }
@@ -31,6 +32,11 @@ exec('lp -d CANON_SELPHY_CP1200 '.$docroot.$_POST['path']);
   <span class="h3" class="navbar-brand mb-0">Printerface</span>
 </nav>
 <div class="container">
+<?php
+	if (isset($message)) {
+	echo '<div class="alert alert-success alert-dismissible fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>Sent to Printer</div>';
+	}
+?>
 	<div class="row mt-2 justify-content-center">
     	<!--	<div class="col"> -->
 

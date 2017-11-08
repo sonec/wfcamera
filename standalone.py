@@ -14,6 +14,24 @@ prints_taken = Value('i',0)
 contrast = Value('i',0)
 saturation = Value('i',0)
 brightness = Value('i',50)
+flash = Value('i',0)
+printing = Value('i',0)
+
+def interpret_flashvalue(value):
+    if value == 0:
+        label = "off"
+    elif value == 1:
+        label = "on"
+    elif value == 2:
+        label = "auto"
+    return label
+
+def interpret_printingvalue(value):
+    if value == 0:
+        label = "manual"
+    elif value == 1:
+        label = "After every shot"
+    return label
 
 def flaskapp():
 #    global photos_taken
@@ -38,42 +56,50 @@ def flaskapp():
         button = request.get_json('buttonid')
         #print(buttoni['buttonid'])
         if button['buttonid'] == 'contrast_pos':
-            contrast.value += 10
+            contrast.value += 1
             if contrast.value > 100:
                 contrast.value = 100
         elif button['buttonid'] == 'contrast_neg':
-            contrast.value -= 10
+            contrast.value -= 1
             if contrast.value < -100:
                 contrast.value = -100
         elif button['buttonid'] == 'saturation_pos':
-            saturation.value += 10
+            saturation.value += 1
             if saturation.value > 100:
                 saturation.value = 100
         elif button['buttonid'] == 'saturation_neg':
-            saturation.value -= 10
+            saturation.value -= 1
             if saturation.value < -100:
                 saturation.value = -100
         elif button['buttonid'] == 'brightness_pos':
-            brightness.value += 10
+            brightness.value += 1
             if brightness.value > 100:
                 brightness.value = 100
         elif button['buttonid'] == 'brightness_neg':
-            brightness.value -= 10
+            brightness.value -= 1
             if brightness.value < 0:
                 brightness.value = 0
+        elif button['buttonid'] == 'flash':
+            flash.value += 1
+            if flash.value > 2:
+                flash.value = 0
+        elif button['buttonid'] == 'printing':
+            printing.value += 1
+            if printing.value > 1:
+                printing.value = 0
         #seteffect('none')
         return ("success")
 
     @app.route("/background_process")
     def background_process():
-        return jsonify(photos=photos_taken.value,montages=montages_taken.value,prints=prints_taken.value,contrast=contrast.value,saturation=saturation.value,brightness=brightness.value)
+        return jsonify(photos=photos_taken.value,montages=montages_taken.value,prints=prints_taken.value,contrast=contrast.value,saturation=saturation.value,brightness=brightness.value,flash=interpret_flashvalue(flash.value),printing=interpret_printingvalue(printing.value))
 
     @app.route("/stats",methods=['GET','POST'])
     def stats():
         if request.method == 'POST':
             mesg = request.form
         #mesg = str(photos.value)+" & "+str(montages.value)
-        data=['Booth Stats',"Stats",photos_taken.value,montages_taken.value,prints_taken.value,contrast.value,saturation.value,brightness.value]
+        data=['Booth Stats',"Stats",photos_taken.value,montages_taken.value,prints_taken.value,contrast.value,saturation.value,brightness.value,interpret_flashvalue(flash.value),interpret_printingvalue(printing.value)]
         return render_template('template1.html',data=data)
 
     @app.route("/boothcontrol", methods=['GET','POST'])
@@ -85,6 +111,8 @@ def flaskapp():
         if request.method == 'POST':
             if request.form['action'] == 'Shutdown':
                 subprocess.call(["sudo", "poweroff"])
+            elif request.form['action'] == 'Terminate':
+                subprocess.call(["pkill", "python3"])
             elif request.form['action'] == 'Reboot':
                 subprocess.call(["sudo", "reboot"])
             elif request.form['action'] == 'Clear Photo Gallery':
@@ -99,10 +127,6 @@ def flaskapp():
                 subprocess.call(['sudo', 'bash', '~/Desktop/enable_ap.sh'],shell=True)
             elif request.form['action'] == 'Disable AP Mode':
                 subprocess.call(['sudo', 'bash', '~/Desktop/disable_ap.sh'],shell=True)
-            elif request.form['action'] == 'contrast_minus':
-                print("should decrease contrast")
-            elif request.form['action'] == 'contrast_plus':
-                print("should increase contrast")
             else:
                 subprocess.call(['date'])
         data=['Booth Admin',"System",time.strftime("%b %d %Y %H:%M:%S",time.localtime()),msg]
@@ -133,11 +157,12 @@ screenflash = True
 #selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
 selectedeffects = "none","b&w","none","sepia"
 led_pin = 17
+light_pin = 12
 #flash pin is GPIO12!
 pin_camera_btn = 21 # pin that the button is attached to
 countdowntimer = 4  # how many seconds to count down from
 camera = PiCamera()
-camera.flash_mode = 'on'
+camera.flash_mode = 'off'
 camera.rotation = 00
 camera.resolution= (1600,960)
 camera.hflip = True
@@ -242,6 +267,7 @@ def setupGPIO():
  #   GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # assign GPIO pin 21 to our "take photo" button
     GPIO.setup(pin_camera_btn, GPIO.IN,pull_up_down=GPIO.PUD_UP) 
     GPIO.setup(led_pin, GPIO.OUT)
+    GPIO.setup(light_pin, GPIO.OUT)
     GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
 
 def seteffect(effect='none'):
@@ -260,7 +286,8 @@ def seteffect(effect='none'):
         camera.saturation = saturation.value
         camera.contrast = contrast.value
         camera.color_effects = None
-    print("EFFECT: "+effect)
+    if buttonflag == True:
+        print("EFFECT: "+effect)
 
 
 def my_callback(channel):
@@ -327,7 +354,9 @@ def taking_photo(photo_number, filename_prefix):
         elif counter == 1:
             for i in range(1):
                 GPIO.output(led_pin, True)
-                sleep(1)
+                sleep(0.5)
+                GPIO.output(light_pin, False)
+                sleep(0.5)
                 
                 
 
@@ -337,15 +366,17 @@ def taking_photo(photo_number, filename_prefix):
     GPIO.output(led_pin, False)
     if screenflash ==True:
         camera.start_preview(alpha = 0)
+    camera.flash_mode = interpret_flashvalue(flash.value)
     camera.hflip = False
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
     camera.hflip = True
+    GPIO.output(light_pin, True)
     if screenflash ==True:
         camera.start_preview(alpha = 255)
     global photos_taken
     photos_taken.value +=1
     #updatecount()
-    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,2,'RGB',True)
+    overlay_image(REAL_PATH+'/temp/image%s.jpg' % photo_number,4,4,'RGB',True)
     
     copyfile(REAL_PATH+'/temp/image%s.jpg' % photo_number,REAL_PATH+"/photos/"+filename)
 
@@ -360,7 +391,7 @@ def main():
     setupGPIO()
     background = make_solid('white',0,1)
 #    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
-
+    GPIO.output(light_pin, True)
     camera.start_preview()
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
     instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
@@ -382,7 +413,7 @@ def main():
             #idleflash()
         #    t = threading.Timer(10,func2)
         #    t.start()
-            
+            seteffect("none")
             if (time.time() - start) > 1:
                 start = time.time()
                 if pinstatus == True:
@@ -424,8 +455,13 @@ def main():
         #subprocess.call(["convert", REAL_PATH+"/temp/temp_montage_four.jpg", "-resize", "256x256", REAL_PATH+"/temp/temp_montage_thumbnail.jpg"],shell=True)
         #subprocess.call(["montage", REAL_PATH+"/temp/temp_montage_four.jpg", REAL_PATH+"/assets/photobooth_label.jpg", "-tile", "2x1", "-geometry +5+5", REAL_PATH+"/temp/temp_montage_framed.jpg"],shell=True)
         #copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
+
+        if printing.value == 1:
+            subprocess.call(["lp -d CANON_SELPHY_CP1200 "+REAL_PATH+"/temp/temp_montage_print.jpg"],shell=True)
+            prints_taken.value +=1
         copyfile(REAL_PATH+"/temp/temp_montage_thumbnail.jpg",REAL_PATH+"/www/thumbnails/"+filename_prefix+"_montage.jpg")
         copyfile(REAL_PATH+"/temp/temp_montage_print.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")        
+
         global montages_taken
         montages_taken.value +=1
         #updatecount()
