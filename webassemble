@@ -1,0 +1,9 @@
+#!/bin/bash
+realpath='/home/pi/wfcamera'
+
+#groups photos
+montage ${realpath}/temp/image*.jpg -tile 2x2 -geometry +5+5 ${realpath}/temp/temp_m.jpg
+#creates thumbnail
+convert ${realpath}/temp/temp_m.jpg -resize 256x256 ${realpath}/temp/temp_mt.jpg
+#final web version - adds watermark
+montage ${realpath}/temp/temp_m.jpg ${realpath}/assets/tcp_vertical.png -tile 2x1 -geometry +5+5 ${realpath}/temp/temp_mw.jpg

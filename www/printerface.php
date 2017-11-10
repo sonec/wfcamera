@@ -87,7 +87,7 @@ if($max>$total){
         $path_parts = pathinfo($file);
         $filename = $path_parts['filename'];        
 
-        echo '<div class="card"><a class="card-link" data-filename="'.$filename.'" data-path="montages/'.$filename.'.jpg" data-toggle="modal" data-target="#exampleModal"><img class="card-img-top" src="'.$file.'"><div class="card-body"><p class="card-text text-center">'.$filename.'</p></div></a></div>';
+        echo '<div class="card"><a class="card-link" data-filename="'.$filename.'" data-path="prints/'.$filename.'.jpg" data-toggle="modal" data-target="#exampleModal"><img class="card-img-top" src="'.$file.'"><div class="card-body"><p class="card-text text-center">'.$filename.'</p></div></a></div>';
     }        
 
 function show_pagination($current_page, $last_page){

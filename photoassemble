@@ -1,13 +1,12 @@
 #!/bin/bash
 realpath='/home/pi/wfcamera'
 
-montage ${realpath}/temp/image*.jpg -tile 2x2 -geometry +10+10 ${realpath}/temp/temp_montage_four.jpg
-convert ${realpath}/temp/temp_montage_four.jpg -resize 256x256 ${realpath}/temp/temp_montage_thumbnail.jpg
-montage ${realpath}/temp/temp_montage_four.jpg ${realpath}/assets/tcp_vertical.png -tile 2x1 -geometry +5+5 ${realpath}/temp/temp_montage_framed.jpg
-
-montage ${realpath}/temp/image*.jpg -tile 1x4 -geometry +5+5 ${realpath}/temp/temp_montage_vert.jpg
-montage ${realpath}/temp/temp_montage_vert.jpg ${realpath}/assets/tcp_horizontal.png -tile 1x2 -geometry +2+2 ${realpath}/temp/temp_montage_printframed.jpg
-montage ${realpath}/temp/temp_montage_printframed.jpg -duplicate 1 -geometry +0+0 ${realpath}/temp/temp_montage_print.jpg
+#groups photos in a strip
+montage ${realpath}/temp/image*.jpg -tile 1x4 -geometry +0+5 ${realpath}/temp/temp_mv.jpg
+#adds watermark
+montage ${realpath}/temp/temp_mv.jpg ${realpath}/assets/adventure.png -tile 1x2 -geometry +0+0 ${realpath}/temp/temp_mv2.jpg
+#doubles image
+montage ${realpath}/temp/temp_mv2.jpg -background white -duplicate 1 -gravity east -geometry +20+0 ${realpath}/temp/temp_mvp.jpg
 
 #rm ${realpath}/temp/temp_montage.jpg
 #convert ${realpath}/temp/temp_montage_framed.jpg -resize 1000x1000 ${realpath}/temp/montage_preview.jpg
