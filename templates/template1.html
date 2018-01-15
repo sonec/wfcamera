@@ -74,6 +74,18 @@
 			    <button class="btn btn-primary btn-block" id="flash">{{ data[8] }}</button>
 			</div>
 			</div>
+<div class="form-group row">
+			<label class="col-6 col-form-label">ISO</label>
+			<div class="col-6">
+			    <button class="btn btn-primary btn-block" id="iso">{{ data[11] }}</button>
+			</div>
+			</div>
+<div class="form-group row">
+			<label class="col-6 col-form-label">Shutter</label>
+			<div class="col-6">
+			    <button class="btn btn-primary btn-block" id="shutter">{{ data[12] }}</button>
+			</div>
+			</div>
 			
 			<button class="btn btn-success btn-lg btn-block" id="remotesnap">Remote Trigger</button>
       </div>
@@ -182,6 +194,8 @@ function update_values() {
                     $("#brightness").attr('value',data.brightness)
                     $("#flash").text(data.flash)
 		    $("#printing").text(data.printing)
+		    $("#iso").text(data.iso)
+		    $("#shutter").text(data.shutter)
                 });
         }
 

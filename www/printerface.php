@@ -7,6 +7,10 @@ exec('lp -d CANON_SELPHY_CP1200 '.$docroot.$_POST['path']);
 $message = "Printing";
 //exec('ls');
 //exec('lp -d CANON_SELPHY_CP910'.$_POST['path']);
+} else if (isset($_POST['printN']))
+{
+exec('lp -d CANON_SELPHY_CP1200N -raw '.$docroot.$_POST['path']);
+$message = "Printing";
 }
 ?>
 
@@ -55,7 +59,11 @@ $message = "Printing";
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <form method="POST"><input id="hid" type="hidden" name="path" value="" /><input type="submit" name="print" value="Print" class="btn btn-primary" /></form>
+        <form method="POST"><input id="hid" type="hidden" name="path" value="" />
+<input type="submit" name="print" value="Print" class="btn btn-primary" />
+<input id="hid" type="hidden" name="path" value="" />
+<input type="submit" name="printN" value="Print Wireless" class="btn btn-primary ml-1" />
+</form>
       </div>
     </div>
   </div>

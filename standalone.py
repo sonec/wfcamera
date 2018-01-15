@@ -14,9 +14,47 @@ prints_taken = Value('i',0)
 contrast = Value('i',0)
 saturation = Value('i',0)
 brightness = Value('i',50)
-flash = Value('i',0)
+flash = Value('i',1)
 printing = Value('i',0)
 remotesnap = Value('i',0)
+iso = Value('i',0)
+shutter = Value('i',0)
+
+def interpret_isovalue(value):
+    if value == 0:
+        label = 0
+    elif value == 1:
+        label = 100
+    elif value == 2:
+        label = 200
+    elif value == 3:
+        label = 320
+    elif value == 4:
+        label = 400   
+    elif value == 5:
+        label = 500
+    elif value == 6:
+        label = 640
+    elif value == 7:
+        label = 800
+    return label
+
+def interpret_shuttervalue(value):
+    if value == 0:
+        label = 0
+    elif value == 1:
+        label = 240000
+    elif value == 2:
+        label = 120000
+    elif value == 3:
+        label = 60000
+    elif value == 4:
+        label = 30000
+    elif value == 5:
+        label = 15000
+    elif value == 6:
+        label = 5000
+    return label
 
 def interpret_flashvalue(value):
     if value == 0:
@@ -84,6 +122,14 @@ def flaskapp():
             flash.value += 1
             if flash.value > 2:
                 flash.value = 0
+        elif button['buttonid'] == 'iso':
+            iso.value += 1
+            if iso.value > 7:
+                iso.value = 0
+        elif button['buttonid'] == 'shutter':
+            shutter.value += 1
+            if shutter.value > 6:
+                shutter.value = 0
         elif button['buttonid'] == 'printing':
             printing.value += 1
             if printing.value > 1:
@@ -97,7 +143,7 @@ def flaskapp():
 
     @app.route("/background_process")
     def background_process():
-        return jsonify(photos=photos_taken.value,montages=montages_taken.value,prints=prints_taken.value,contrast=contrast.value,saturation=saturation.value,brightness=brightness.value,flash=interpret_flashvalue(flash.value),printing=interpret_printingvalue(printing.value))
+        return jsonify(photos=photos_taken.value,montages=montages_taken.value,prints=prints_taken.value,contrast=contrast.value,saturation=saturation.value,brightness=brightness.value,flash=interpret_flashvalue(flash.value),printing=interpret_printingvalue(printing.value),iso=interpret_isovalue(iso.value),shutter=interpret_shuttervalue(shutter.value))
 
     @app.route("/stats",methods=['GET','POST'])
     def stats():
@@ -106,7 +152,7 @@ def flaskapp():
             #mesg = request.form
         mesg = subprocess.check_output(["lpstat", "-p", "Canon_SELPHY_CP1200"])
         #mesg = str(photos.value)+" & "+str(montages.value)
-        data=['Booth Stats',"Stats",photos_taken.value,montages_taken.value,prints_taken.value,contrast.value,saturation.value,brightness.value,interpret_flashvalue(flash.value),interpret_printingvalue(printing.value),mesg]
+        data=['Booth Stats',"Stats",photos_taken.value,montages_taken.value,prints_taken.value,contrast.value,saturation.value,brightness.value,interpret_flashvalue(flash.value),interpret_printingvalue(printing.value),mesg,interpret_isovalue(iso.value),interpret_shuttervalue(shutter.value)]
         return render_template('template1.html',data=data)
 
     @app.route("/boothcontrol", methods=['GET','POST'])
@@ -123,17 +169,17 @@ def flaskapp():
             elif request.form['action'] == 'Reboot':
                 subprocess.call(["sudo", "reboot"])
             elif request.form['action'] == 'Clear Photo Gallery':
-                subprocess.call(['mv -v ~/wfcamera/www/montages/* ~/wfcamera/montages_old/'],shell=True)
-                subprocess.call(['mv -v ~/wfcamera/www/thumbnails/* ~/wfcamera/thumbnails_old/'],shell=True)
+                subprocess.call(['sudo mv -v ~/wfcamera/www/montages/* ~/wfcamera/montages_old/'],shell=True)
+                subprocess.call(['sudo mv -v ~/wfcamera/www/thumbnails/* ~/wfcamera/thumbnails_old/'],shell=True)
                 msg = Markup('<div class="alert alert-success alert-dismissible fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>Photos cleared</div>')
             elif request.form['action'] == 'Sync Time':
                 newdate = request.form['mytime']
                 output = subprocess.call(['sudo date -s "'+newdate+'"'],shell=True)
                 #msg = Markup('<div class="alert alert-success alert-dismissible fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>Time synced</div>')
             elif request.form['action'] == 'Enable AP Mode':
-                subprocess.call(['sudo', 'bash', '~/Desktop/enable_ap.sh'],shell=True)
+                subprocess.call(['sudo bash ~/Desktop/enable_ap.sh'],shell=True)
             elif request.form['action'] == 'Disable AP Mode':
-                subprocess.call(['sudo', 'bash', '~/Desktop/disable_ap.sh'],shell=True)
+                subprocess.call(['sudo bash ~/Desktop/disable_ap.sh'],shell=True)
             else:
                 subprocess.call(['date'])
         data=['Booth Admin',"System",time.strftime("%b %d %Y %H:%M:%S",time.localtime()),msg]
@@ -163,12 +209,15 @@ screenflash = True
 #selectedeffects = "none","negative","solarize","cartoon","sketch","emboss","film","watercolor","gpen","oilpaint","pastel","posterise"
 selectedeffects = "none","b&w","none","sepia"
 led_pin = 17
-light_pin = 12
+#light_pin = 12
 #flash pin is GPIO12!
 pin_camera_btn = 21 # pin that the button is attached to
 countdowntimer = 4  # how many seconds to count down from
 camera = PiCamera()
-camera.flash_mode = 'off'
+camera.flash_mode = 'auto'
+camera.iso = 0
+camera.framerate = 60
+camera.shutter_speed = 0
 camera.rotation = 00
 camera.resolution= (1520,960)
 camera.hflip = True
@@ -273,7 +322,7 @@ def setupGPIO():
  #   GPIO.setup(pin_camera_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # assign GPIO pin 21 to our "take photo" button
     GPIO.setup(pin_camera_btn, GPIO.IN,pull_up_down=GPIO.PUD_UP) 
     GPIO.setup(led_pin, GPIO.OUT)
-    GPIO.setup(light_pin, GPIO.OUT)
+    #GPIO.setup(light_pin, GPIO.OUT)
     GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
 
 def seteffect(effect='none'):
@@ -303,12 +352,13 @@ def my_callback(channel):
 #        camera.image_effect = next(cycleeffects)
 #        print("EFFECT: "+camera.image_effect)
 #         print("no filter")
-        neweffect = next(cycleeffects)
-        seteffect(neweffect)
+        #neweffect = next(cycleeffects)
+        #seteffect(neweffect)
+        pass
          
     else:
         buttonflag = True
-  #  print(buttonflag)
+    #print(buttonflag)
         #TODO = start running main program
     
 def taking_photo(photo_number, filename_prefix):
@@ -361,7 +411,7 @@ def taking_photo(photo_number, filename_prefix):
             for i in range(1):
                 GPIO.output(led_pin, True)
                 sleep(0.5)
-                GPIO.output(light_pin, False)
+                #GPIO.output(light_pin, False)
                 sleep(0.5)
                 
                 
@@ -373,10 +423,12 @@ def taking_photo(photo_number, filename_prefix):
     if screenflash ==True:
         camera.start_preview(alpha = 0)
     camera.flash_mode = interpret_flashvalue(flash.value)
+    camera.iso = interpret_isovalue(iso.value)
+    camera.shutter_speed = interpret_shuttervalue(shutter.value)
     camera.hflip = False
     camera.capture(REAL_PATH+'/temp/image%s.jpg' % photo_number)
     camera.hflip = True
-    GPIO.output(light_pin, True)
+    #GPIO.output(light_pin, True)
     if screenflash == True:
         camera.start_preview(alpha = 255)
     global photos_taken
@@ -397,9 +449,9 @@ def main():
     setupGPIO()
     background = make_solid('black',0,1)
 #    GPIO.add_event_detect(pin_camera_btn, GPIO.FALLING, callback=my_callback, bouncetime=300)
-    GPIO.output(light_pin, True)
+    #GPIO.output(light_pin, True)
     camera.start_preview()
-    camera.preview.window = (0,0,760,480)
+    #camera.preview.window = (0,0,760,480)
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
     instruction_image = overlay_image(REAL_PATH+'/assets/instructions3.png',0,3,'RGBA')
     print("beginning loop")
@@ -468,7 +520,7 @@ def main():
         #copyfile(REAL_PATH+"/temp/temp_montage_framed.jpg",REAL_PATH+"/www/montages/"+filename_prefix+"_montage.jpg")
 
         if printing.value == 1:
-            subprocess.call(["lp -d CANON_SELPHY_CP1200 "+REAL_PATH+"/temp/temp_mvp.jpg"],shell=True)
+            subprocess.call(["sudo lp -d CANON_SELPHY_CP1200 "+REAL_PATH+"/temp/temp_mvp.jpg"],shell=True)
             prints_taken.value +=1
         subprocess.call(["sudo " + REAL_PATH+"/webassemble"],shell=True)        
             
@@ -499,7 +551,7 @@ def main():
         """
 
         overlay_image(REAL_PATH+'/temp/temp_mw.jpg',10)
-        overlay_image(REAL_PATH+'/assets/download2.png',10)
+        #overlay_image(REAL_PATH+'/assets/download2.png',10)
 
         
 #        camera.image_effect = 'none'
