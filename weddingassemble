@@ -1,0 +1,10 @@
+#!/bin/bash
+realpath='/home/pi/wfcamera'
+
+#groups photos
+montage ${realpath}/temp/image*.jpg -tile 1x3 -geometry +0+2 ${realpath}/temp/temp_m.jpg
+#creates thumbnail
+convert ${realpath}/temp/temp_m.jpg -resize 256x256 ${realpath}/temp/temp_mt.jpg
+#final web version - adds watermark and doubles for booth printing
+montage ${realpath}/temp/temp_m.jpg ${realpath}/assets/wedding_watermark.png -tile 1x2 -geometry +5+5 ${realpath}/temp/temp_mw.jpg
+montage ${realpath}/temp/temp_mw.jpg -background white -duplicate 1 -gravity east -geometry +20+0 ${realpath}/temp/temp_mvp.jpg
