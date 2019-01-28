@@ -24,6 +24,9 @@
   <span class="h3" class="navbar-brand mb-0">{{ data[1] }}</span>
 <ul class="navbar-nav">
 	<li class="nav-item">
+        <a class="nav-link" target="_blank" href="http://booth.local/printerface.php">Printer</a>
+      </li>
+	<li class="nav-item">
         <a class="nav-link" href="boothcontrol">Go to System</a>
       </li>
 </ul>
@@ -50,9 +53,6 @@
 			    <input type="text" readonly class="form-control" id="prints_taken" value="{{ data[4] }}" >
 			</div>
 			</div>
-
-			
-
 			</div>
 			
 			<div id="accordion" role="tablist">
@@ -91,28 +91,7 @@
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-header" role="tab" id="headingPrinter">
-      <h5 class="mb-0">
-        <a class="collapsed" data-toggle="collapse" href="#collapsePrint" aria-expanded="false" aria-controls="collapsePrint">
-          Printer
-        </a>
-      </h5>
-    </div>
-    <div id="collapsePrint" class="collapse" role="tabpanel" aria-labelledby="headingPrinter" data-parent="#accordion">
-      <div class="card-body">
-			<div class="form-group row">
-			<label class="col-6 col-form-label">Printing</label>
-			<div class="col-6">
-			    <button class="btn btn-primary btn-block" id="printing">{{ data[9] }}</button>
-			</div>
-			</div>
-			<button class="btn btn-secondary btn-lg btn-block" id="printerstatus">PrinterStatus</button>
-			<input type=textarea" readonly value={{ data[10] }}" id="printerreadout">
-        </div>
-    </div>
-  </div>
-  <div class="card">
+ <div class="card">
     <div class="card-header" role="tab" id="headingTwo">
       <h5 class="mb-0">
         <a class="collapsed" data-toggle="collapse" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
@@ -171,11 +150,80 @@
     </div>
   </div>
 </div>
+
+
+
+
+ <div class="card">
+    <div class="card-header" role="tab" id="headingLed">
+      <h5 class="mb-0">
+        <a class="collapsed" data-toggle="collapse" href="#collapseLed" aria-expanded="false" aria-controls="collapseLed">
+          LED Strip
+        </a>
+      </h5>
+    </div>
+    <div id="collapseLed" class="collapse" role="tabpanel" aria-labelledby="headingLed" data-parent="#accordion">
+      <div class="card-body">
+
+<div class="form-group row">
+			<label for="contrast" class="col-6 col-form-label">LED brightness</label>
+			<div class="col-6">
+			<div class="input-group">
+			    <span class="input-group-btn">
+				<button class="btn btn-secondary" type="button" id="led_neg">-</button>
+			    </span>
+			    <input type="text" class="form-control" id="ledbrightness" readonly value="{{ data[12] }}" >
+			    <span class="input-group-btn">
+			    	<button class="btn btn-secondary" type="button" id="led_pos">+</button>
+			    </span>
+			</div>
+			</div>
+			
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+  <div class="card">
+    <div class="card-header" role="tab" id="headingPrinter">
+      <h5 class="mb-0">
+        <a class="collapsed" data-toggle="collapse" href="#collapsePrint" aria-expanded="false" aria-controls="collapsePrint">
+          Printer
+        </a>
+      </h5>
+    </div>
+    <div id="collapsePrint" class="collapse" role="tabpanel" aria-labelledby="headingPrinter" data-parent="#accordion">
+      <div class="card-body">
+			<div class="form-group row">
+			<label class="col-6 col-form-label">Printing</label>
+			<div class="col-6">
+			    <button class="btn btn-primary btn-block" id="printing">{{ data[9] }}</button>
+			</div>
+			</div>
+			<button class="btn btn-success btn-lg btn-block" id="resumeprinter">Resume Printer</button>
+			<button class="btn btn-warning btn-lg btn-block" id="disableprinter">Disable Printer</button>
+			<button class="btn btn-danger btn-lg btn-block" id="dumpprintqueue">Dump all print jobs</button>			
+<!--<button class="btn btn-secondary btn-lg btn-block" id="printerstatus">PrinterStatus</button>
+			<textarea class="form-control" readonly id="printerreadout" rows=5>{{ data[10] }}</textarea>-->
+			
+        </div>
+    </div>
+  </div>
+ 
+
+			<pre id="printerstatus" style="white-space: pre-wrap;">{{ data[10] }}</pre>
+
+			<pre id="printerqueue" style="white-space: pre-wrap;">{{ data[11] }}</pre>
 		</div>
 
 
 </div>
-
+</div>
 
 
 
@@ -184,7 +232,7 @@
 $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
 function update_values() {
-            $.getJSON($SCRIPT_ROOT+"/background_process",
+            $.getJSON($SCRIPT_ROOT+"/sync_webinterface",
                 function(data) {
                     $("#photos_taken").attr('value',data.photos)
                     $("#montages_taken").attr('value',data.montages)
@@ -196,9 +244,13 @@ function update_values() {
 		    $("#printing").text(data.printing)
 		    $("#iso").text(data.iso)
 		    $("#shutter").text(data.shutter)
+		    $("#printerstatus").text(data.mesg)
+		    $("#printerqueue").text(data.queue)
+		    $("#ledbrightness").attr('value',data.ledbrightness)
                 });
         }
 
+update_values()
 
 setInterval(update_values, 10000)
 

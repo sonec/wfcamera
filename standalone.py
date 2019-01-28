@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 ## imports ##
 
 import datetime
@@ -137,7 +137,8 @@ def flaskapp():
         elif button['buttonid'] == 'remotesnap':
             remotesnap.value = 1
         elif button['buttonid'] == 'printerstatus':
-            subprocess.call(["cupsenable", "Canon_SELPHY_CP1200"])
+            #subprocess.call(["cupsenable", "Canon_SELPHY_CP1200"])
+            pass
         #seteffect('none')
         return ("success")
 
@@ -150,7 +151,8 @@ def flaskapp():
         if request.method == 'POST':
             pass
             #mesg = request.form
-        mesg = subprocess.check_output(["lpstat", "-p", "Canon_SELPHY_CP1200"])
+        mesg = ""
+        #mesg = subprocess.check_output(["lpstat", "-p", "Canon_SELPHY_CP1200"])
         #mesg = str(photos.value)+" & "+str(montages.value)
         data=['Booth Stats',"Stats",photos_taken.value,montages_taken.value,prints_taken.value,contrast.value,saturation.value,brightness.value,interpret_flashvalue(flash.value),interpret_printingvalue(printing.value),mesg,interpret_isovalue(iso.value),interpret_shuttervalue(shutter.value)]
         return render_template('template1.html',data=data)
@@ -177,9 +179,9 @@ def flaskapp():
                 output = subprocess.call(['sudo date -s "'+newdate+'"'],shell=True)
                 #msg = Markup('<div class="alert alert-success alert-dismissible fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>Time synced</div>')
             elif request.form['action'] == 'Enable AP Mode':
-                subprocess.call(['sudo bash ~/Desktop/enable_ap.sh'],shell=True)
+                subprocess.call(['sudo bash ~/Desktop/AP_start.sh'],shell=True)
             elif request.form['action'] == 'Disable AP Mode':
-                subprocess.call(['sudo bash ~/Desktop/disable_ap.sh'],shell=True)
+                subprocess.call(['sudo bash ~/Desktop/AP_stop.sh'],shell=True)
             else:
                 subprocess.call(['date'])
         data=['Booth Admin',"System",time.strftime("%b %d %Y %H:%M:%S",time.localtime()),msg]
@@ -453,7 +455,7 @@ def main():
     camera.start_preview()
     #camera.preview.window = (0,0,760,480)
 #    background = overlay_image('/home/pi/instructions2.png',0,1)
-    instruction_image = overlay_image(REAL_PATH+'/assets/instructions3.png',0,3,'RGBA')
+    instruction_image = overlay_image(REAL_PATH+'/assets/instructions2.png',0,3,'RGBA')
     print("beginning loop")
     seteffect("none")
     global buttonflag
@@ -508,7 +510,7 @@ def main():
             #take all sets of photos
             taking_photo(photo_number, filename_prefix)
             
-        wait_image =  overlay_image(REAL_PATH+'/assets/wait2.png',0)
+        wait_image =  overlay_image(REAL_PATH+'/assets/wait.png',0)
 
 #        GPIO.remove_event_detect(pin_camera_btn)
         print("Processing photos")

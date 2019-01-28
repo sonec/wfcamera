@@ -3,13 +3,13 @@
 $docroot = '/home/pi/wfcamera/www/';
 if (isset($_POST['print']))
 {
-exec('lp -d CANON_SELPHY_CP1200 '.$docroot.$_POST['path']);
+exec('lp -d Canon_SELPHY_CP1200 '.$docroot.$_POST['path']);
 $message = "Printing";
 //exec('ls');
-//exec('lp -d CANON_SELPHY_CP910'.$_POST['path']);
+
 } else if (isset($_POST['printN']))
 {
-exec('lp -d CANON_SELPHY_CP1200N -raw '.$docroot.$_POST['path']);
+exec('lp -d Canon_SELPHY_CP1200N -raw '.$docroot.$_POST['path']);
 $message = "Printing";
 }
 ?>

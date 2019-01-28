@@ -4,7 +4,7 @@ realpath='/home/pi/wfcamera'
 #groups photos in a strip
 montage ${realpath}/temp/image*.jpg -tile 1x4 -geometry +0+5 ${realpath}/temp/temp_mv.jpg
 #adds watermark
-montage ${realpath}/temp/temp_mv.jpg ${realpath}/assets/adventure.png -tile 1x2 -geometry +0+0 ${realpath}/temp/temp_mv2.jpg
+montage ${realpath}/temp/temp_mv.jpg ${realpath}/assets/tcp_horizontal.png -tile 1x2 -geometry +0+0 ${realpath}/temp/temp_mv2.jpg
 #doubles image
 montage ${realpath}/temp/temp_mv2.jpg -background white -duplicate 1 -gravity east -geometry +20+0 ${realpath}/temp/temp_mvp.jpg
 
